@@ -1,4 +1,4 @@
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/cuckoomon.c cuckoomon/cuckoomon.c
+diff -rupN -x objects -x .git -x 'logtbl*' -x .gitignore -x 'distorm*' cuckoomon-orig/cuckoomon.c cuckoomon/cuckoomon.c
 --- cuckoomon-orig/cuckoomon.c	2014-01-25 21:22:53.506392395 +0100
 +++ cuckoomon/cuckoomon.c	2014-01-19 16:55:59.352211635 +0100
 @@ -76,6 +76,9 @@ static hook_t g_hooks[] = {
@@ -11,22 +11,7 @@ diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/cuckoomon.c cuckoomon/
      // lowest variant of MoveFile()
      HOOK(kernel32, MoveFileWithProgressW),
  
-Binary files cuckoomon-orig/distorm3.2-package/src/decoder.o and cuckoomon/distorm3.2-package/src/decoder.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/distorm.o and cuckoomon/distorm3.2-package/src/distorm.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/instructions.o and cuckoomon/distorm3.2-package/src/instructions.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/insts.o and cuckoomon/distorm3.2-package/src/insts.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/mnemonics.o and cuckoomon/distorm3.2-package/src/mnemonics.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/operands.o and cuckoomon/distorm3.2-package/src/operands.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/prefix.o and cuckoomon/distorm3.2-package/src/prefix.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/textdefs.o and cuckoomon/distorm3.2-package/src/textdefs.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/wstring.o and cuckoomon/distorm3.2-package/src/wstring.o differ
-Binary files cuckoomon-orig/distorm3.2-package/src/x86defs.o and cuckoomon/distorm3.2-package/src/x86defs.o differ
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/.gitignore cuckoomon/.gitignore
---- cuckoomon-orig/.gitignore	1970-01-01 01:00:00.000000000 +0100
-+++ cuckoomon/.gitignore	2014-01-19 16:51:17.836218915 +0100
-@@ -0,0 +1 @@
-+logtbl.c
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_file.c cuckoomon/hook_file.c
+diff -rupN -x objects -x .git -x 'logtbl*' -x .gitignore -x 'distorm*' cuckoomon-orig/hook_file.c cuckoomon/hook_file.c
 --- cuckoomon-orig/hook_file.c	2014-01-25 21:22:53.510392395 +0100
 +++ cuckoomon/hook_file.c	2014-01-19 16:55:59.352211635 +0100
 @@ -20,6 +20,7 @@ along with this program.  If not, see <h
@@ -77,7 +62,7 @@ diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_file.c cuckoomon/
 +    return ret;
 +}
 +
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_reg.c cuckoomon/hook_reg.c
+diff -rupN -x objects -x .git -x 'logtbl*' -x .gitignore -x 'distorm*' cuckoomon-orig/hook_reg.c cuckoomon/hook_reg.c
 --- cuckoomon-orig/hook_reg.c	2014-01-25 21:22:53.510392395 +0100
 +++ cuckoomon/hook_reg.c	2014-01-19 17:01:00.424203850 +0100
 @@ -18,12 +18,14 @@ along with this program.  If not, see <h
@@ -184,7 +169,7 @@ diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_reg.c cuckoomon/h
      else {
          LOQ2("puLL", "Handle", hKey, "ValueName", lpValueName,
              "Type", lpType, "DataLength", lpcbData);
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hooks.h cuckoomon/hooks.h
+diff -rupN -x objects -x .git -x 'logtbl*' -x .gitignore -x 'distorm*' cuckoomon-orig/hooks.h cuckoomon/hooks.h
 --- cuckoomon-orig/hooks.h	2014-01-25 21:22:53.514392395 +0100
 +++ cuckoomon/hooks.h	2014-01-19 16:55:59.356211635 +0100
 @@ -212,6 +212,16 @@ extern HOOKDEF(BOOL, WINAPI, DeleteFileW
@@ -204,7 +189,7 @@ diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hooks.h cuckoomon/hook
  //
  // Registry Hooks
  //
-diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/Makefile cuckoomon/Makefile
+diff -rupN -x objects -x .git -x 'logtbl*' -x .gitignore -x 'distorm*' cuckoomon-orig/Makefile cuckoomon/Makefile
 --- cuckoomon-orig/Makefile	2014-01-25 21:22:53.506392395 +0100
 +++ cuckoomon/Makefile	2014-01-19 16:52:08.664217600 +0100
 @@ -1,5 +1,5 @@

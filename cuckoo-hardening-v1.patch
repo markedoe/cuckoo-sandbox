@@ -1,0 +1,216 @@
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/cuckoomon.c cuckoomon/cuckoomon.c
+--- cuckoomon-orig/cuckoomon.c	2014-01-25 21:22:53.506392395 +0100
++++ cuckoomon/cuckoomon.c	2014-01-19 16:55:59.352211635 +0100
+@@ -76,6 +76,9 @@ static hook_t g_hooks[] = {
+     HOOK(kernel32, RemoveDirectoryA),
+     HOOK(kernel32, RemoveDirectoryW),
+ 
++    HOOK(kernel32, GetFileAttributesA),
++    HOOK(kernel32, GetFileAttributesExA),
++
+     // lowest variant of MoveFile()
+     HOOK(kernel32, MoveFileWithProgressW),
+ 
+Binary files cuckoomon-orig/distorm3.2-package/src/decoder.o and cuckoomon/distorm3.2-package/src/decoder.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/distorm.o and cuckoomon/distorm3.2-package/src/distorm.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/instructions.o and cuckoomon/distorm3.2-package/src/instructions.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/insts.o and cuckoomon/distorm3.2-package/src/insts.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/mnemonics.o and cuckoomon/distorm3.2-package/src/mnemonics.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/operands.o and cuckoomon/distorm3.2-package/src/operands.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/prefix.o and cuckoomon/distorm3.2-package/src/prefix.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/textdefs.o and cuckoomon/distorm3.2-package/src/textdefs.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/wstring.o and cuckoomon/distorm3.2-package/src/wstring.o differ
+Binary files cuckoomon-orig/distorm3.2-package/src/x86defs.o and cuckoomon/distorm3.2-package/src/x86defs.o differ
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/.gitignore cuckoomon/.gitignore
+--- cuckoomon-orig/.gitignore	1970-01-01 01:00:00.000000000 +0100
++++ cuckoomon/.gitignore	2014-01-19 16:51:17.836218915 +0100
+@@ -0,0 +1 @@
++logtbl.c
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_file.c cuckoomon/hook_file.c
+--- cuckoomon-orig/hook_file.c	2014-01-25 21:22:53.510392395 +0100
++++ cuckoomon/hook_file.c	2014-01-19 16:55:59.352211635 +0100
+@@ -20,6 +20,7 @@ along with this program.  If not, see <h
+ #include <ctype.h>
+ #include <windows.h>
+ #include <shlwapi.h>
++#include <string.h>
+ #include "hooking.h"
+ #include "ntapi.h"
+ #include "log.h"
+@@ -494,3 +495,39 @@ HOOKDEF(BOOL, WINAPI, DeleteFileW,
+     LOQ("u", "FileName", lpFileName);
+     return ret;
+ }
++
++/* Hardened */
++HOOKDEF(DWORD, WINAPI, GetFileAttributesA,
++  __in      LPCTSTR lpFileName
++) {
++    BOOL ret;
++    if (strstr(lpFileName, "VBox") != NULL) {
++        ret = INVALID_FILE_ATTRIBUTES;
++        LOQ("s", "Hardening", "Faked GetFileAttributesA return");
++    }
++    else {
++        ret = Old_GetFileAttributesA(lpFileName);
++    }
++    LOQ("s", "GetFileAttributesA", lpFileName);
++    return ret;
++}
++
++/* Hardened */
++HOOKDEF(DWORD, WINAPI, GetFileAttributesExA,
++  __in      LPCTSTR lpFileName,
++  __in      GET_FILEEX_INFO_LEVELS fInfoLevelId,
++  __out     LPVOID lpFileInformation
++) {
++    BOOL ret;
++    if (strstr(lpFileName, "VBox") != NULL) {
++        ret = 0;
++        LOQ("s", "Hardening", "Faked GetFileAttributesExA return");
++    }
++    else {
++        ret = Old_GetFileAttributesExA(lpFileName, fInfoLevelId,
++            lpFileInformation);
++    }
++    LOQ("s", "GetFileAttributesExA", lpFileName);
++    return ret;
++}
++
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hook_reg.c cuckoomon/hook_reg.c
+--- cuckoomon-orig/hook_reg.c	2014-01-25 21:22:53.510392395 +0100
++++ cuckoomon/hook_reg.c	2014-01-19 17:01:00.424203850 +0100
+@@ -18,12 +18,14 @@ along with this program.  If not, see <h
+ 
+ #include <stdio.h>
+ #include <windows.h>
++#include <string.h>
+ #include "hooking.h"
+ #include "ntapi.h"
+ #include "log.h"
+ 
+ static IS_SUCCESS_LONGREG();
+ 
++/* Hardened */
+ HOOKDEF(LONG, WINAPI, RegOpenKeyExA,
+     __in        HKEY hKey,
+     __in_opt    LPCTSTR lpSubKey,
+@@ -31,8 +33,35 @@ HOOKDEF(LONG, WINAPI, RegOpenKeyExA,
+     __in        REGSAM samDesired,
+     __out       PHKEY phkResult
+ ) {
+-    LONG ret = Old_RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired,
+-        phkResult);
++    LONG ret;
++    if (strstr(lpSubKey, "VirtualBox") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++    else if (strstr(lpSubKey, "ControlSet") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++     else if (strstr(lpSubKey, "VBOX") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++    else if (strstr(lpSubKey, "vbox") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++    else if (strstr(lpSubKey, "oracle") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++    else if (strstr(lpSubKey, "virtualbox") != NULL) {
++        ret = 1;
++        LOQ("s", "Hardening", "Faked RegOpenKeyExA return");
++    }
++    else {
++        ret = Old_RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired,
++            phkResult);
++    }
+     LOQ("psP", "Registry", hKey, "SubKey", lpSubKey, "Handle", phkResult);
+     return ret;
+ }
+@@ -241,6 +270,7 @@ HOOKDEF(LONG, WINAPI, RegSetValueExW,
+     return ret;
+ }
+ 
++/* Hardened */
+ HOOKDEF(LONG, WINAPI, RegQueryValueExA,
+     __in         HKEY hKey,
+     __in_opt     LPCTSTR lpValueName,
+@@ -250,8 +280,29 @@ HOOKDEF(LONG, WINAPI, RegQueryValueExA,
+     __inout_opt  LPDWORD lpcbData
+ ) {
+     ENSURE_DWORD(lpType);
+-    LONG ret = Old_RegQueryValueExA(hKey, lpValueName, lpReserved, lpType,
+-        lpData, lpcbData);
++    LONG ret;
++    /* HARDWARE\\Description\\System "SystemBiosVersion" */
++    if (strstr(lpValueName, "SystemBiosVersion") != NULL) {
++        ret = ERROR_SUCCESS;
++        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
++    }
++    /* HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port 0\\Scsi Bus 0\\Target Id 0\\Logical Unit Id 0 "Identifier" */
++    else if (strstr(lpValueName, "Identifier") != NULL) {
++        ret = ERROR_SUCCESS;
++        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
++    }
++    else if (strstr(lpValueName, "ProductId") != NULL) {
++        ret = ERROR_SUCCESS;
++        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
++    }
++     else if (strstr(lpValueName, "VideoBiosVersion") != NULL) {
++        ret = ERROR_SUCCESS;
++        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
++    }
++    else {
++        ret = Old_RegQueryValueExA(hKey, lpValueName, lpReserved, lpType,
++            lpData, lpcbData);
++    }
+     if(ret == ERROR_SUCCESS && lpType != NULL && lpData != NULL &&
+             lpcbData != NULL) {
+         LOQ("psr", "Handle", hKey, "ValueName", lpValueName,
+@@ -280,6 +331,10 @@ HOOKDEF(LONG, WINAPI, RegQueryValueExW,
+         LOQ("puR", "Handle", hKey, "ValueName", lpValueName,
+             "Data", *lpType, *lpcbData, lpData);
+     }
++     else if (wcsstr(lpValueName, L"VideoBiosVersion") != NULL) {
++        ret = ERROR_SUCCESS;
++        LOQ("s", "Hardening", "Faked RegQueryValueExA return");
++    }
+     else {
+         LOQ2("puLL", "Handle", hKey, "ValueName", lpValueName,
+             "Type", lpType, "DataLength", lpcbData);
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/hooks.h cuckoomon/hooks.h
+--- cuckoomon-orig/hooks.h	2014-01-25 21:22:53.514392395 +0100
++++ cuckoomon/hooks.h	2014-01-19 16:55:59.356211635 +0100
+@@ -212,6 +212,16 @@ extern HOOKDEF(BOOL, WINAPI, DeleteFileW
+     __in  LPWSTR lpFileName
+ );
+ 
++extern HOOKDEF(DWORD, WINAPI, GetFileAttributesA,
++  __in      LPCTSTR lpFileName
++);
++
++extern HOOKDEF(DWORD, WINAPI, GetFileAttributesExA,
++  __in      LPCTSTR lpFileName,
++  __in      GET_FILEEX_INFO_LEVELS fInfoLevelId,
++  __out     LPVOID lpFileInformation
++);
++
+ //
+ // Registry Hooks
+ //
+diff -rupN -x objects -x .git -x 'logtbl*' cuckoomon-orig/Makefile cuckoomon/Makefile
+--- cuckoomon-orig/Makefile	2014-01-25 21:22:53.506392395 +0100
++++ cuckoomon/Makefile	2014-01-19 16:52:08.664217600 +0100
+@@ -1,5 +1,5 @@
+ MAKEFLAGS = -j8
+-CC = gcc
++CC = i586-mingw32msvc-gcc
+ CFLAGS = -Wall -std=c99 -s -O2
+ DLL = -shared
+ DIRS = -Idistorm3.2-package/include
